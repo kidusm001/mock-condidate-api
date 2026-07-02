@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Mock Candidates API</title>
+	<style>
+		* { box-sizing: border-box; }
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+			max-width: 720px;
+			margin: 2rem auto;
+			padding: 0 1rem;
+			color: #1a1a1a;
+			background: #f7f7f8;
+		}
+		h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
+		.subtitle { color: #6b6b75; margin: 0 0 1.5rem; font-size: 0.9rem; }
+		.card {
+			background: white;
+			border: 1px solid #e5e5ea;
+			border-radius: 8px;
+			padding: 1.25rem;
+			margin-bottom: 1.25rem;
+		}
+		.card h2 {
+			margin: 0 0 1rem;
+			font-size: 1.1rem;
+		}
+		.field { margin-bottom: 0.85rem; }
+		.field label {
+			display: block;
+			font-size: 0.85rem;
+			font-weight: 500;
+			margin-bottom: 0.3rem;
+			color: #3a3a40;
+		}
+		.field .hint {
+			font-size: 0.75rem;
+			color: #8a8a90;
+			font-weight: 400;
+			margin-left: 0.4rem;
+		}
+		.field input {
+			width: 100%;
+			padding: 0.55rem 0.7rem;
+			border: 1px solid #d0d0d6;
+			border-radius: 6px;
+			font-size: 0.95rem;
+			font-family: inherit;
+		}
+		.field input:focus {
+			outline: none;
+			border-color: #4f46e5;
+			box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+		}
+		.row { display: flex; gap: 0.75rem; }
+		.row .field { flex: 1; }
+		button {
+			background: #4f46e5;
+			color: white;
+			border: none;
+			padding: 0.6rem 1.2rem;
+			border-radius: 6px;
+			font-size: 0.95rem;
+			font-weight: 500;
+			cursor: pointer;
+			font-family: inherit;
+		}
+		button:hover { background: #4338ca; }
+		button:disabled { background: #a5a5b0; cursor: not-allowed; }
+		button.secondary {
+			background: white;
+			color: #3a3a40;
+			border: 1px solid #d0d0d6;
+		}
+		button.secondary:hover { background: #f0f0f3; }
+		.result {
+			margin-top: 1rem;
+			padding: 0.75rem 0.9rem;
+			border-radius: 6px;
+			font-size: 0.85rem;
+			font-family: ui-monospace, "SF Mono", Menlo, monospace;
+			white-space: pre-wrap;
+			word-break: break-all;
+			display: none;
+		}
+		.result.success {
+			background: #ecfdf5;
+			border: 1px solid #a7f3d0;
+			color: #065f46;
+		}
+		.result.error {
+			background: #fef2f2;
+			border: 1px solid #fecaca;
+			color: #991b1b;
+		}
+		.toolbar {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 0.75rem;
+		}
+		.toolbar h2 { margin: 0; }
+		.candidate {
+			padding: 0.7rem 0.85rem;
+			border: 1px solid #e5e5ea;
+			border-radius: 6px;
+			margin-bottom: 0.5rem;
+			background: #fafafb;
+			font-size: 0.9rem;
+		}
+		.candidate .name {
+			font-weight: 600;
+			margin-bottom: 0.25rem;
+		}
+		.candidate .meta {
+			color: #6b6b75;
+			font-size: 0.8rem;
+		}
+		.candidate .meta span { display: inline-block; margin-right: 0.85rem; }
+		.candidate .meta .label { color: #8a8a90; }
+		.empty { color: #8a8a90; font-size: 0.9rem; font-style: italic; }
+		.place-card {
+			margin-top: 1rem;
+			padding: 0.85rem 1rem;
+			border-radius: 6px;
+			background: #f5f3ff;
+			border: 1px solid #ddd6fe;
+			font-size: 0.85rem;
+		}
+		.place-card .place-title {
+			font-weight: 600;
+			color: #4c1d95;
+			margin-bottom: 0.4rem;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		.place-card .place-title .badge {
+			font-size: 0.7rem;
+			padding: 0.1rem 0.5rem;
+			background: #ddd6fe;
+			color: #4c1d95;
+			border-radius: 10px;
+			font-weight: 500;
+		}
+		.place-card .place-title .badge.none {
+			background: #f0f0f3;
+			color: #6b6b75;
+		}
+		.place-card .place-field {
+			display: flex;
+			gap: 0.4rem;
+			margin: 0.2rem 0;
+			color: #3a3a40;
+		}
+		.place-card .place-field .label {
+			color: #6b6b75;
+			min-width: 110px;
+			flex-shrink: 0;
+		}
+		.footer {
+			margin-top: 2rem;
+			padding-top: 1rem;
+			border-top: 1px solid #e5e5ea;
+			color: #8a8a90;
+			font-size: 0.8rem;
+			text-align: center;
+		}
+	</style>
+</head>
+<body>
+	<h1>Mock Candidates API</h1>
+	<p class="subtitle">Insert candidates into the running mock. POSTs to <code>/api/method/receive_candidate</code>.</p>
+
+	<div class="card">
+		<h2>New candidate</h2>
+		<form id="form">
+			<div class="field">
+				<label for="candidate_name">Candidate name <span class="hint">required</span></label>
+				<input id="candidate_name" name="candidate_name" type="text" required />
+			</div>
+			<div class="field">
+				<label for="dropoff_location">Dropoff location <span class="hint">required</span></label>
+				<input id="dropoff_location" name="dropoff_location" type="text" required />
+			</div>
+			<div class="row">
+				<div class="field">
+					<label for="phone">Phone <span class="hint">optional</span></label>
+					<input id="phone" name="phone" type="tel" />
+				</div>
+				<div class="field">
+					<label for="id">ID <span class="hint">optional</span></label>
+					<input id="id" name="id" type="text" />
+				</div>
+			</div>
+			<button type="submit" id="submit-btn">Create candidate</button>
+		</form>
+		<div id="result" class="result"></div>
+		<div id="place-card" class="place-card" style="display:none"></div>
+	</div>
+
+	<div class="card">
+		<div class="toolbar">
+			<h2>Existing candidates <span id="count" style="color:#8a8a90;font-weight:400;font-size:0.9rem"></span></h2>
+			<button type="button" class="secondary" id="refresh-btn">Refresh</button>
+		</div>
+		<div id="list"></div>
+	</div>
+
+	<div class="footer">
+		<a href="/health" target="_blank">/health</a> &middot;
+		<a href="/api/method/frappe.client.get_list?doctype=Candidate" target="_blank">JSON list</a>
+	</div>
+
+	<script>
+		const form = document.getElementById("form");
+		const resultEl = document.getElementById("result");
+		const listEl = document.getElementById("list");
+		const countEl = document.getElementById("count");
+		const submitBtn = document.getElementById("submit-btn");
+		const refreshBtn = document.getElementById("refresh-btn");
+
+		function showResult(kind, message) {
+			resultEl.className = `result ${kind}`;
+			resultEl.textContent = message;
+			resultEl.style.display = "block";
+		}
+
+		function clearResult() {
+			resultEl.style.display = "none";
+		}
+
+		function escapeHtml(s) {
+			if (s === null || s === undefined) return "";
+			return String(s)
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;")
+				.replace(/"/g, "&quot;")
+				.replace(/'/g, "&#039;");
+		}
+
+		function renderCandidate(c) {
+			const meta = [];
+			if (c.phone) meta.push(`<span><span class="label">phone:</span> ${escapeHtml(c.phone)}</span>`);
+			if (c.id) meta.push(`<span><span class="label">id:</span> ${escapeHtml(c.id)}</span>`);
+			if (c.dropoff_place?.place_id) meta.push(`<span><span class="label">place_id:</span> ${escapeHtml(c.dropoff_place.place_id)}</span>`);
+			meta.push(`<span><span class="label">created:</span> ${escapeHtml(c.created_at)}</span>`);
+			return `
+				<div class="candidate">
+					<div class="name">${escapeHtml(c.candidate_name)}</div>
+					<div class="meta">
+						<span><span class="label">dropoff:</span> ${escapeHtml(c.dropoff_location)}</span>
+						${meta.join("")}
+					</div>
+				</div>
+			`;
+		}
+
+		function renderPlaceCard(place) {
+			const card = document.getElementById("place-card");
+			if (!place || !place.place_id) {
+				card.innerHTML = `
+					<div class="place-title">Resolved place <span class="badge none">not resolved</span></div>
+					<div style="color:#6b6b75">No place data — either <code>GOOGLE_API_KEY</code> is unset, Google returned no result, or the call failed.</div>
+				`;
+				card.style.display = "block";
+				return;
+			}
+			const fields = [
+				["display_name", place.display_name],
+				["formatted_address", place.formatted_address],
+				["place_id", place.place_id],
+				["lat", place.lat],
+				["lng", place.lng],
+			];
+			const rows = fields
+				.filter(([_, v]) => v !== null && v !== undefined)
+				.map(([k, v]) => `<div class="place-field"><span class="label">${escapeHtml(k)}</span><span>${escapeHtml(String(v))}</span></div>`)
+				.join("");
+			card.innerHTML = `
+				<div class="place-title">Resolved place <span class="badge">google</span></div>
+				${rows}
+			`;
+			card.style.display = "block";
+		}
+
+		function clearPlaceCard() {
+			const card = document.getElementById("place-card");
+			card.style.display = "none";
+			card.innerHTML = "";
+		}
+
+		async function loadList() {
+			try {
+				const res = await fetch("/api/method/frappe.client.get_list?doctype=Candidate");
+				const body = await res.json();
+				const items = body.data || [];
+				countEl.textContent = `(${items.length})`;
+				if (items.length === 0) {
+					listEl.innerHTML = `<div class="empty">No candidates yet. Create one above.</div>`;
+				} else {
+					listEl.innerHTML = items.map(renderCandidate).join("");
+				}
+			} catch (err) {
+				listEl.innerHTML = `<div class="empty">Failed to load: ${escapeHtml(err.message)}</div>`;
+			}
+		}
+
+		form.addEventListener("submit", async (e) => {
+			e.preventDefault();
+			clearResult();
+			clearPlaceCard();
+			submitBtn.disabled = true;
+			submitBtn.textContent = "Creating...";
+
+			const payload = {
+				candidate_name: document.getElementById("candidate_name").value.trim(),
+				dropoff_location: document.getElementById("dropoff_location").value.trim(),
+				phone: document.getElementById("phone").value.trim() || null,
+				id: document.getElementById("id").value.trim() || null,
+			};
+
+			try {
+				const res = await fetch("/api/method/receive_candidate", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(payload),
+				});
+				const body = await res.json();
+				if (res.ok) {
+					showResult("success", `${res.status} ${res.statusText}\n${JSON.stringify(body, null, 2)}`);
+					renderPlaceCard(body.dropoff_place);
+					form.reset();
+					loadList();
+				} else {
+					showResult("error", `${res.status} ${res.statusText}\n${JSON.stringify(body, null, 2)}`);
+				}
+			} catch (err) {
+				showResult("error", `Network error: ${err.message}`);
+			} finally {
+				submitBtn.disabled = false;
+				submitBtn.textContent = "Create candidate";
+			}
+		});
+
+		refreshBtn.addEventListener("click", loadList);
+
+		loadList();
+	</script>
+</body>
+</html>

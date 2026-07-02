@@ -1,0 +1,19 @@
+{
+  "name": "mock-condidate-api",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun --env-file=.env run index.ts",
+    "dev": "bun --env-file=.env --hot run index.ts"
+  },
+  "engines": {
+    "bun": ">=1.3.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

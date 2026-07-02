@@ -1,0 +1,49 @@
+import type { Candidate } from "./types.ts";
+
+export const seedCandidates: Candidate[] = [
+	{
+		name: "Abebe Kebede",
+		candidate_name: "Abebe Kebede",
+		id: "REQ-1001",
+		phone: "+251911000111",
+		dropoff_location: "Bole Edna Mall, gate 2",
+		dropoff_place: {
+			place_id: "ChIJn2qQo3J3XRYRkR3QY3QY3QY",
+			display_name: "Edna Mall",
+			formatted_address: "Bole, Addis Ababa, Ethiopia",
+			lat: 9.0054,
+			lng: 38.789,
+		},
+		created_at: "2026-05-30T09:00:00.000Z",
+	},
+	{
+		name: "Sara Tesfaye",
+		candidate_name: "Sara Tesfaye",
+		id: "REQ-1002",
+		phone: "+251922000222",
+		dropoff_location: "Piassa, in front of Commercial Bank",
+		dropoff_place: {
+			place_id: "ChIJPk4sQY3XRYRkR3QY3QY3QY3",
+			display_name: "Commercial Bank of Ethiopia - Piassa",
+			formatted_address: "Piassa, Addis Ababa, Ethiopia",
+			lat: 9.0192,
+			lng: 38.7525,
+		},
+		created_at: "2026-05-31T14:15:00.000Z",
+	},
+	{
+		name: "Daniel Mekonnen",
+		candidate_name: "Daniel Mekonnen",
+		id: null,
+		phone: null,
+		dropoff_location: "Sarbet, near St. Urael Church",
+		dropoff_place: {
+			place_id: "ChIJU3Rae3XRYRkR3QY3QY3QY3Q",
+			display_name: "St. Urael Church",
+			formatted_address: "Sarbet, Addis Ababa, Ethiopia",
+			lat: 9.0135,
+			lng: 38.74,
+		},
+		created_at: "2026-06-01T08:45:00.000Z",
+	},
+];
