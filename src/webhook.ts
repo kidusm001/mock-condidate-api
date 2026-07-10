@@ -1,3 +1,4 @@
+import * as store from "./store.ts";
 import type { Candidate } from "./types.ts";
 
 const TIMEOUT_MS = 5000;
@@ -53,11 +54,26 @@ export function notifyCandidateCreated(candidate: Candidate): void {
 		body,
 		signal: controller.signal,
 	})
-		.then((res) => {
+		.then(async (res) => {
 			if (!res.ok) {
 				console.error(`[webhook] non-2xx response: ${res.status} ${res.statusText}`);
-			} else {
-				console.log(`[webhook] delivered candidate.created for ${candidate.name}`);
+				return;
+			}
+			console.log(`[webhook] delivered candidate.created for ${candidate.name}`);
+
+			// receive_candidate returns {"message": "<Frappe Candidate name>"}.
+			try {
+				const parsed = JSON.parse(await res.text());
+				const frappeCandidate = typeof parsed?.message === "string" ? parsed.message : null;
+				if (frappeCandidate) {
+					const fresh = await store.get(candidate.name);
+					if (fresh) {
+						fresh.frappe_candidate = frappeCandidate;
+						await store.update(fresh);
+					}
+				}
+			} catch (err) {
+				console.error(`[webhook] could not parse Frappe candidate name: ${(err as Error).message}`);
 			}
 		})
 		.catch((err) => {

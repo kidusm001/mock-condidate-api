@@ -6,6 +6,15 @@ export type ResolvedPlace = {
 	lng: number | null;
 };
 
+export type ReservationState = {
+	status: "Ready for Reservation" | "Requested" | "Failed";
+	matched_route: string | null;
+	frappe_candidate: string | null;
+	notified_at: string;
+	requested_at: string | null;
+	response: unknown;
+};
+
 export type Candidate = {
 	name: string;
 	candidate_name: string;
@@ -14,6 +23,17 @@ export type Candidate = {
 	dropoff_location: string;
 	dropoff_place: ResolvedPlace | null;
 	created_at: string;
+	reservation: ReservationState | null;
+	/** Frappe's Candidate.name, learned from the receive_candidate webhook response. */
+	frappe_candidate: string | null;
+};
+
+export type ReadyForReservationPayload = {
+	external_request_id?: string | null;
+	candidate?: string | null;
+	candidate_name?: string | null;
+	matched_route?: string | null;
+	state?: string | null;
 };
 
 export type ReceiveCandidateRequest = {

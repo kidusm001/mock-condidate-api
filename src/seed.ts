@@ -15,6 +15,8 @@ export const seedCandidates: Candidate[] = [
 			lng: 38.789,
 		},
 		created_at: "2026-05-30T09:00:00.000Z",
+		reservation: null,
+		frappe_candidate: null,
 	},
 	{
 		name: "Sara Tesfaye",
@@ -30,6 +32,8 @@ export const seedCandidates: Candidate[] = [
 			lng: 38.7525,
 		},
 		created_at: "2026-05-31T14:15:00.000Z",
+		reservation: null,
+		frappe_candidate: null,
 	},
 	{
 		name: "Daniel Mekonnen",
@@ -45,5 +49,7 @@ export const seedCandidates: Candidate[] = [
 			lng: 38.74,
 		},
 		created_at: "2026-06-01T08:45:00.000Z",
+		reservation: null,
+		frappe_candidate: null,
 	},
 ];

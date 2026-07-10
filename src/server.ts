@@ -1,7 +1,9 @@
 import { httpError, jsonResponse } from "./errors.ts";
+import { getCandidateStatus } from "./frappe.ts";
 import { resolvePlace } from "./place.ts";
+import { handleReadyForReservation, requestReservation } from "./reservation.ts";
 import * as store from "./store.ts";
-import type { Candidate, ReceiveCandidateRequest } from "./types.ts";
+import type { Candidate, ReadyForReservationPayload, ReceiveCandidateRequest } from "./types.ts";
 import { notifyCandidateCreated } from "./webhook.ts";
 
 const ALLOWED_FIELDS = new Set([
@@ -186,6 +188,8 @@ async function handleReceiveCandidate(req: Request): Promise<Response> {
 		dropoff_location: data.dropoff_location!,
 		dropoff_place,
 		created_at: new Date().toISOString(),
+		reservation: null,
+		frappe_candidate: null,
 	};
 	await store.insert(candidate);
 	notifyCandidateCreated(candidate);
@@ -203,6 +207,88 @@ async function handleGetOne(name: string): Promise<Response> {
 		return withCors(httpError(404, "NotFound", `Candidate '${name}' not found`));
 	}
 	return withCors(jsonResponse(200, candidate));
+}
+
+function isReadyForReservationPayload(body: Record<string, unknown>): body is ReadyForReservationPayload {
+	for (const key of Object.keys(body)) {
+		const val = body[key];
+		if (val !== null && val !== undefined && typeof val !== "string") return false;
+	}
+	return true;
+}
+
+function isAuthorizedReservationNotify(req: Request): boolean {
+	const expected = process.env.EXTERNAL_RESERVATION_TOKEN;
+	if (!expected) return true; // unset: auth check disabled (local dev default)
+
+	const header = req.headers.get("Authorization") ?? "";
+	const [scheme, token] = header.split(" ");
+	return scheme === "token" && token === expected;
+}
+
+async function handleReadyForReservationPut(req: Request): Promise<Response> {
+	if (!isAuthorizedReservationNotify(req)) {
+		return withCors(httpError(401, "Unauthorized", "invalid or missing Authorization token"));
+	}
+
+	let body: Record<string, unknown>;
+	try {
+		body = await parseBody(req);
+	} catch (err) {
+		return withCors(
+			httpError(400, "ValidationError", `invalid request body: ${(err as Error).message}`),
+		);
+	}
+
+	if (!isReadyForReservationPayload(body)) {
+		return withCors(httpError(400, "ValidationError", "payload fields must be strings"));
+	}
+	if (!body.external_request_id) {
+		return withCors(httpError(400, "ValidationError", "external_request_id is required"));
+	}
+
+	const candidate = await handleReadyForReservation(body);
+	if (!candidate) {
+		return withCors(
+			httpError(
+				404,
+				"NotFound",
+				`No candidate found for external_request_id '${body.external_request_id}'`,
+			),
+		);
+	}
+	return withCors(jsonResponse(200, candidate));
+}
+
+async function handleFrappeStatus(idOrName: string): Promise<Response> {
+	const candidate =
+		(await store.get(idOrName)) ?? (await store.findByExternalId(idOrName));
+	if (!candidate) {
+		return withCors(httpError(404, "NotFound", `Candidate '${idOrName}' not found`));
+	}
+	if (!candidate.frappe_candidate) {
+		return withCors(jsonResponse(200, { status: null }));
+	}
+
+	const status = await getCandidateStatus(candidate.frappe_candidate);
+	return withCors(jsonResponse(200, { status }));
+}
+
+async function handleRequestReservation(idOrName: string): Promise<Response> {
+	const candidate =
+		(await store.get(idOrName)) ?? (await store.findByExternalId(idOrName));
+	if (!candidate) {
+		return withCors(httpError(404, "NotFound", `Candidate '${idOrName}' not found`));
+	}
+
+	try {
+		const updated = await requestReservation(candidate);
+		return withCors(jsonResponse(200, updated));
+	} catch (err) {
+		return withCors(
+			httpError(502, "RequestReservationFailed", `request_reservation call failed: ${(err as Error).message}`),
+		);
+	}
 }
 
 async function handleReset(): Promise<Response> {
@@ -254,9 +340,35 @@ const server = Bun.serve({
 
 		if (path === "/api/reset" && req.method === "POST") return handleReset();
 
+		if (path === "/api/external/reservation" && req.method === "PUT") {
+			return handleReadyForReservationPut(req);
+		}
+
 		if (path.startsWith("/api/resource/Candidate/")) {
 			const name = decodeURIComponent(path.slice("/api/resource/Candidate/".length));
 			if (req.method === "GET") return handleGetOne(name);
+		}
+
+		if (
+			path.startsWith("/api/reservations/") &&
+			path.endsWith("/request-reservation") &&
+			req.method === "POST"
+		) {
+			const idOrName = decodeURIComponent(
+				path.slice("/api/reservations/".length, -"/request-reservation".length),
+			);
+			return handleRequestReservation(idOrName);
+		}
+
+		if (
+			path.startsWith("/api/candidates/") &&
+			path.endsWith("/frappe-status") &&
+			req.method === "GET"
+		) {
+			const idOrName = decodeURIComponent(
+				path.slice("/api/candidates/".length, -"/frappe-status".length),
+			);
+			return handleFrappeStatus(idOrName);
 		}
 
 		if (path === "/" || !path.startsWith("/api/")) {

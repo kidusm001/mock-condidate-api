@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "mock-api", "runtimeExecutable": "bun", "runtimeArgs": ["run", "index.ts"], "port": 8001 }
+  ]
+}

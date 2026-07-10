@@ -5,214 +5,400 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Mock Candidates API</title>
 	<style>
+		:root {
+			--bg: #0f1117;
+			--panel: #ffffff;
+			--surface: #f7f8fa;
+			--surface-2: #f0f1f5;
+			--border: #e4e6eb;
+			--border-strong: #d3d6dd;
+			--text: #16181d;
+			--text-2: #5c6270;
+			--text-3: #8b909c;
+			--brand: #4f46e5;
+			--brand-hover: #4338ca;
+			--brand-soft: #eef0ff;
+			--green: #059669;
+			--green-soft: #ecfdf5;
+			--green-border: #a7f3d0;
+			--red: #dc2626;
+			--red-soft: #fef2f2;
+			--red-border: #fecaca;
+			--amber: #b45309;
+			--amber-soft: #fffbeb;
+			--shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.08);
+			--shadow-lg: 0 10px 30px rgba(16, 24, 40, 0.12);
+			--radius: 12px;
+		}
 		* { box-sizing: border-box; }
+		html, body { height: 100%; }
 		body {
+			margin: 0;
 			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-			max-width: 720px;
-			margin: 2rem auto;
-			padding: 0 1rem;
-			color: #1a1a1a;
-			background: #f7f7f8;
+			color: var(--text);
+			background: var(--surface);
+			-webkit-font-smoothing: antialiased;
 		}
-		h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
-		.subtitle { color: #6b6b75; margin: 0 0 1.5rem; font-size: 0.9rem; }
+		code {
+			font-family: ui-monospace, "SF Mono", Menlo, monospace;
+			font-size: 0.85em;
+			background: var(--surface-2);
+			padding: 0.1rem 0.35rem;
+			border-radius: 5px;
+		}
+
+		/* ---- App shell ---- */
+		.app-header {
+			position: sticky;
+			top: 0;
+			z-index: 20;
+			background: var(--bg);
+			color: #fff;
+			border-bottom: 1px solid rgba(255,255,255,0.08);
+		}
+		.app-header .inner {
+			max-width: 1080px;
+			margin: 0 auto;
+			padding: 0.85rem 1.5rem;
+			display: flex;
+			align-items: center;
+			gap: 0.85rem;
+		}
+		.logo {
+			width: 34px; height: 34px;
+			border-radius: 9px;
+			background: linear-gradient(135deg, #6366f1, #4f46e5);
+			display: grid;
+			place-items: center;
+			font-weight: 700;
+			font-size: 1rem;
+			box-shadow: 0 2px 8px rgba(79,70,229,0.5);
+		}
+		.app-header .title { font-size: 1.02rem; font-weight: 600; letter-spacing: -0.01em; }
+		.app-header .title small { display: block; font-weight: 400; font-size: 0.75rem; color: rgba(255,255,255,0.55); margin-top: 1px; }
+		.header-actions { margin-left: auto; display: flex; align-items: center; gap: 0.6rem; }
+		.status-pill {
+			display: inline-flex; align-items: center; gap: 0.4rem;
+			font-size: 0.75rem; color: rgba(255,255,255,0.75);
+			background: rgba(255,255,255,0.06);
+			border: 1px solid rgba(255,255,255,0.1);
+			padding: 0.3rem 0.65rem; border-radius: 999px;
+		}
+		.dot { width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; }
+		.dot.up { background: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
+		.dot.down { background: #ef4444; }
+		.ghost-link {
+			color: rgba(255,255,255,0.7); font-size: 0.8rem; text-decoration: none;
+			padding: 0.3rem 0.6rem; border-radius: 7px;
+		}
+		.ghost-link:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+		/* ---- Layout ---- */
+		.layout {
+			max-width: 1080px;
+			margin: 1.5rem auto;
+			padding: 0 1.5rem 3rem;
+			display: grid;
+			grid-template-columns: 380px 1fr;
+			gap: 1.5rem;
+			align-items: start;
+		}
+		@media (max-width: 860px) {
+			.layout { grid-template-columns: 1fr; }
+		}
+
 		.card {
-			background: white;
-			border: 1px solid #e5e5ea;
-			border-radius: 8px;
-			padding: 1.25rem;
-			margin-bottom: 1.25rem;
+			background: var(--panel);
+			border: 1px solid var(--border);
+			border-radius: var(--radius);
+			box-shadow: var(--shadow);
 		}
-		.card h2 {
-			margin: 0 0 1rem;
-			font-size: 1.1rem;
+		.card-head {
+			padding: 1rem 1.15rem;
+			border-bottom: 1px solid var(--border);
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 0.5rem;
 		}
-		.field { margin-bottom: 0.85rem; }
+		.card-head h2 { margin: 0; font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; }
+		.card-head .sub { font-size: 0.75rem; color: var(--text-3); margin-top: 2px; }
+		.card-body { padding: 1.15rem; }
+
+		.left-col { position: sticky; top: 78px; display: flex; flex-direction: column; gap: 1.25rem; }
+		@media (max-width: 860px) { .left-col { position: static; } }
+
+		/* ---- Form ---- */
+		.field { margin-bottom: 0.9rem; }
+		.field:last-child { margin-bottom: 0; }
 		.field label {
-			display: block;
-			font-size: 0.85rem;
-			font-weight: 500;
-			margin-bottom: 0.3rem;
-			color: #3a3a40;
+			display: flex; align-items: center; gap: 0.35rem;
+			font-size: 0.8rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-2);
 		}
-		.field .hint {
-			font-size: 0.75rem;
-			color: #8a8a90;
-			font-weight: 400;
-			margin-left: 0.4rem;
-		}
+		.field .hint { font-size: 0.68rem; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.03em; }
+		.field .hint.req { color: var(--brand); }
 		.field input {
 			width: 100%;
-			padding: 0.55rem 0.7rem;
-			border: 1px solid #d0d0d6;
-			border-radius: 6px;
-			font-size: 0.95rem;
+			padding: 0.6rem 0.75rem;
+			border: 1px solid var(--border-strong);
+			border-radius: 8px;
+			font-size: 0.92rem;
 			font-family: inherit;
+			background: var(--surface);
+			transition: border-color .12s, box-shadow .12s, background .12s;
 		}
 		.field input:focus {
 			outline: none;
-			border-color: #4f46e5;
-			box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+			background: #fff;
+			border-color: var(--brand);
+			box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.14);
 		}
 		.row { display: flex; gap: 0.75rem; }
 		.row .field { flex: 1; }
+
 		button {
-			background: #4f46e5;
-			color: white;
-			border: none;
-			padding: 0.6rem 1.2rem;
-			border-radius: 6px;
-			font-size: 0.95rem;
-			font-weight: 500;
-			cursor: pointer;
-			font-family: inherit;
+			background: var(--brand); color: white; border: none;
+			padding: 0.65rem 1.1rem; border-radius: 8px;
+			font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: inherit;
+			transition: background .12s, transform .04s, box-shadow .12s;
+			display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
 		}
-		button:hover { background: #4338ca; }
-		button:disabled { background: #a5a5b0; cursor: not-allowed; }
+		button:hover { background: var(--brand-hover); }
+		button:active { transform: translateY(1px); }
+		button:disabled { background: #b6b8c4; cursor: not-allowed; }
+		button.block { width: 100%; box-shadow: 0 1px 2px rgba(79,70,229,0.35); }
 		button.secondary {
-			background: white;
-			color: #3a3a40;
-			border: 1px solid #d0d0d6;
+			background: #fff; color: var(--text-2); border: 1px solid var(--border-strong);
+			box-shadow: none; font-weight: 500;
 		}
-		button.secondary:hover { background: #f0f0f3; }
+		button.secondary:hover { background: var(--surface-2); color: var(--text); }
+		button.tiny { padding: 0.35rem 0.7rem; font-size: 0.78rem; border-radius: 7px; }
+		.spinner {
+			width: 14px; height: 14px; border-radius: 50%;
+			border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff;
+			animation: spin .6s linear infinite;
+		}
+		button.secondary .spinner { border-color: rgba(0,0,0,0.15); border-top-color: var(--text-2); }
+		@keyframes spin { to { transform: rotate(360deg); } }
+
+		/* ---- Result / place / json ---- */
 		.result {
-			margin-top: 1rem;
-			padding: 0.75rem 0.9rem;
-			border-radius: 6px;
-			font-size: 0.85rem;
+			margin-top: 1rem; padding: 0.7rem 0.85rem; border-radius: 8px;
+			font-size: 0.83rem; display: none; align-items: flex-start; gap: 0.55rem;
+		}
+		.result .ico { flex-shrink: 0; font-size: 0.95rem; line-height: 1.3; }
+		.result .msg { line-height: 1.4; }
+		.result.success { background: var(--green-soft); border: 1px solid var(--green-border); color: #065f46; }
+		.result.error { background: var(--red-soft); border: 1px solid var(--red-border); color: #991b1b; }
+
+		details.json {
+			margin-top: 0.75rem;
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			overflow: hidden;
+			background: var(--surface);
+		}
+		details.json > summary {
+			cursor: pointer; list-style: none;
+			padding: 0.55rem 0.8rem;
+			font-size: 0.78rem; font-weight: 600; color: var(--text-2);
+			display: flex; align-items: center; gap: 0.45rem;
+			user-select: none;
+		}
+		details.json > summary::-webkit-details-marker { display: none; }
+		details.json > summary .chev { transition: transform .15s; color: var(--text-3); }
+		details.json[open] > summary .chev { transform: rotate(90deg); }
+		details.json > summary .tag {
+			margin-left: auto; font-weight: 500; font-size: 0.7rem;
+			color: var(--text-3); background: var(--surface-2);
+			padding: 0.1rem 0.45rem; border-radius: 999px;
+		}
+		details.json pre {
+			margin: 0; padding: 0.75rem 0.85rem;
+			border-top: 1px solid var(--border);
+			background: #0f1117; color: #e6e9f0;
 			font-family: ui-monospace, "SF Mono", Menlo, monospace;
-			white-space: pre-wrap;
-			word-break: break-all;
-			display: none;
+			font-size: 0.78rem; line-height: 1.5;
+			overflow-x: auto; white-space: pre;
 		}
-		.result.success {
-			background: #ecfdf5;
-			border: 1px solid #a7f3d0;
-			color: #065f46;
-		}
-		.result.error {
-			background: #fef2f2;
-			border: 1px solid #fecaca;
-			color: #991b1b;
-		}
-		.toolbar {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			margin-bottom: 0.75rem;
-		}
-		.toolbar h2 { margin: 0; }
-		.candidate {
-			padding: 0.7rem 0.85rem;
-			border: 1px solid #e5e5ea;
-			border-radius: 6px;
-			margin-bottom: 0.5rem;
-			background: #fafafb;
-			font-size: 0.9rem;
-		}
-		.candidate .name {
-			font-weight: 600;
-			margin-bottom: 0.25rem;
-		}
-		.candidate .meta {
-			color: #6b6b75;
-			font-size: 0.8rem;
-		}
-		.candidate .meta span { display: inline-block; margin-right: 0.85rem; }
-		.candidate .meta .label { color: #8a8a90; }
-		.empty { color: #8a8a90; font-size: 0.9rem; font-style: italic; }
+		.json-key { color: #93c5fd; }
+		.json-str { color: #86efac; }
+		.json-num { color: #fdba74; }
+		.json-bool { color: #c4b5fd; }
+		.json-null { color: #94a3b8; }
+
 		.place-card {
-			margin-top: 1rem;
-			padding: 0.85rem 1rem;
-			border-radius: 6px;
-			background: #f5f3ff;
-			border: 1px solid #ddd6fe;
-			font-size: 0.85rem;
+			margin-top: 0.9rem; padding: 0.85rem 0.95rem; border-radius: 8px;
+			background: var(--brand-soft); border: 1px solid #ddd6fe; font-size: 0.83rem; display: none;
 		}
 		.place-card .place-title {
-			font-weight: 600;
-			color: #4c1d95;
-			margin-bottom: 0.4rem;
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
+			font-weight: 600; color: #4c1d95; margin-bottom: 0.5rem;
+			display: flex; justify-content: space-between; align-items: center;
 		}
 		.place-card .place-title .badge {
-			font-size: 0.7rem;
-			padding: 0.1rem 0.5rem;
-			background: #ddd6fe;
-			color: #4c1d95;
-			border-radius: 10px;
-			font-weight: 500;
+			font-size: 0.68rem; padding: 0.12rem 0.5rem; background: #ddd6fe;
+			color: #4c1d95; border-radius: 999px; font-weight: 600;
+			text-transform: uppercase; letter-spacing: 0.03em;
 		}
-		.place-card .place-title .badge.none {
-			background: #f0f0f3;
-			color: #6b6b75;
+		.place-card .place-title .badge.none { background: var(--surface-2); color: var(--text-3); }
+		.place-card .place-field { display: flex; gap: 0.5rem; margin: 0.22rem 0; color: #3a3a40; }
+		.place-card .place-field .label { color: #6d28d9; min-width: 120px; flex-shrink: 0; font-weight: 500; }
+		.place-card .muted { color: var(--text-2); }
+
+		/* ---- Candidate list ---- */
+		.list-tools { display: flex; align-items: center; gap: 0.5rem; }
+		.search {
+			position: relative;
 		}
-		.place-card .place-field {
-			display: flex;
-			gap: 0.4rem;
-			margin: 0.2rem 0;
-			color: #3a3a40;
+		.search input {
+			padding: 0.45rem 0.7rem 0.45rem 1.9rem;
+			border: 1px solid var(--border-strong); border-radius: 8px;
+			font-size: 0.85rem; font-family: inherit; background: var(--surface); width: 180px;
 		}
-		.place-card .place-field .label {
-			color: #6b6b75;
-			min-width: 110px;
-			flex-shrink: 0;
+		.search input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); background:#fff; }
+		.search .ico { position: absolute; left: 0.6rem; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 0.8rem; pointer-events: none; }
+
+		.candidate {
+			padding: 0; border: 1px solid var(--border);
+			border-radius: 10px; margin-bottom: 0.7rem; background: #fff;
+			overflow: hidden; transition: border-color .12s, box-shadow .12s;
 		}
-		.footer {
-			margin-top: 2rem;
-			padding-top: 1rem;
-			border-top: 1px solid #e5e5ea;
-			color: #8a8a90;
-			font-size: 0.8rem;
-			text-align: center;
+		.candidate:hover { border-color: var(--border-strong); box-shadow: var(--shadow); }
+		.candidate:last-child { margin-bottom: 0; }
+		.cand-main {
+			padding: 0.85rem 1rem;
+			display: flex; align-items: flex-start; gap: 0.8rem;
 		}
+		.avatar {
+			width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+			display: grid; place-items: center; font-weight: 700; font-size: 0.95rem; color: #fff;
+		}
+		.cand-info { flex: 1; min-width: 0; }
+		.cand-top { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+		.cand-name { font-weight: 600; font-size: 0.95rem; }
+		.cand-loc { color: var(--text-2); font-size: 0.82rem; margin-top: 2px; display: flex; align-items: center; gap: 0.3rem; }
+		.chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.55rem; }
+		.chip {
+			font-size: 0.72rem; color: var(--text-2); background: var(--surface);
+			border: 1px solid var(--border); border-radius: 6px; padding: 0.12rem 0.45rem;
+			display: inline-flex; gap: 0.3rem; align-items: center;
+		}
+		.chip b { color: var(--text-3); font-weight: 500; }
+		.cand-side { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; flex-shrink: 0; }
+		.reservation-badge {
+			font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 999px; font-weight: 600;
+			background: var(--surface-2); color: var(--text-2); white-space: nowrap;
+		}
+		.reservation-badge.ready { background: #fef9c3; color: #854d0e; }
+		.reservation-badge.confirmed { background: var(--green-soft); color: #065f46; }
+		.reservation-badge.failed { background: var(--red-soft); color: #991b1b; }
+		.cand-foot {
+			border-top: 1px solid var(--border); background: var(--surface);
+			padding: 0.5rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+		}
+		.cand-foot .ts { font-size: 0.72rem; color: var(--text-3); }
+
+		.empty {
+			text-align: center; padding: 2.5rem 1rem; color: var(--text-3);
+		}
+		.empty .big { font-size: 1.8rem; margin-bottom: 0.5rem; }
+		.empty .t { font-size: 0.92rem; color: var(--text-2); font-weight: 500; }
+		.empty .s { font-size: 0.82rem; margin-top: 0.25rem; }
+
+		.skeleton { padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 0.7rem; display: flex; gap: 0.8rem; }
+		.sk-box { border-radius: 8px; background: linear-gradient(90deg, #eef0f3 25%, #f6f7f9 50%, #eef0f3 75%); background-size: 200% 100%; animation: shimmer 1.3s infinite; }
+		@keyframes shimmer { to { background-position: -200% 0; } }
+
+		.count-badge {
+			font-size: 0.72rem; font-weight: 600; color: var(--brand);
+			background: var(--brand-soft); padding: 0.1rem 0.5rem; border-radius: 999px; margin-left: 0.4rem;
+		}
+
+		/* ---- Toast ---- */
+		#toast-wrap { position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 50; display: flex; flex-direction: column; gap: 0.5rem; }
+		.toast {
+			background: #16181d; color: #fff; padding: 0.7rem 0.95rem; border-radius: 10px;
+			font-size: 0.85rem; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 0.55rem;
+			animation: slidein .2s ease; max-width: 320px;
+		}
+		.toast.ok { border-left: 3px solid var(--green); }
+		.toast.err { border-left: 3px solid var(--red); }
+		@keyframes slidein { from { transform: translateX(20px); opacity: 0; } }
 	</style>
 </head>
 <body>
-	<h1>Mock Candidates API</h1>
-	<p class="subtitle">Insert candidates into the running mock. POSTs to <code>/api/method/receive_candidate</code>.</p>
-
-	<div class="card">
-		<h2>New candidate</h2>
-		<form id="form">
-			<div class="field">
-				<label for="candidate_name">Candidate name <span class="hint">required</span></label>
-				<input id="candidate_name" name="candidate_name" type="text" required />
+	<header class="app-header">
+		<div class="inner">
+			<div class="logo">MC</div>
+			<div class="title">Mock Candidates API<small>local development mock &middot; Frappe-compatible</small></div>
+			<div class="header-actions">
+				<span class="status-pill"><span class="dot" id="health-dot"></span><span id="health-text">checking…</span></span>
+				<a class="ghost-link" href="/api/method/frappe.client.get_list?doctype=Candidate" target="_blank">JSON API ↗</a>
 			</div>
-			<div class="field">
-				<label for="dropoff_location">Dropoff location <span class="hint">required</span></label>
-				<input id="dropoff_location" name="dropoff_location" type="text" required />
-			</div>
-			<div class="row">
-				<div class="field">
-					<label for="phone">Phone <span class="hint">optional</span></label>
-					<input id="phone" name="phone" type="tel" />
-				</div>
-				<div class="field">
-					<label for="id">ID <span class="hint">optional</span></label>
-					<input id="id" name="id" type="text" />
-				</div>
-			</div>
-			<button type="submit" id="submit-btn">Create candidate</button>
-		</form>
-		<div id="result" class="result"></div>
-		<div id="place-card" class="place-card" style="display:none"></div>
-	</div>
-
-	<div class="card">
-		<div class="toolbar">
-			<h2>Existing candidates <span id="count" style="color:#8a8a90;font-weight:400;font-size:0.9rem"></span></h2>
-			<button type="button" class="secondary" id="refresh-btn">Refresh</button>
 		</div>
-		<div id="list"></div>
-	</div>
+	</header>
 
-	<div class="footer">
-		<a href="/health" target="_blank">/health</a> &middot;
-		<a href="/api/method/frappe.client.get_list?doctype=Candidate" target="_blank">JSON list</a>
-	</div>
+	<main class="layout">
+		<!-- LEFT: create form -->
+		<div class="left-col">
+			<section class="card">
+				<div class="card-head">
+					<div>
+						<h2>New candidate</h2>
+						<div class="sub">POST <code>/api/method/receive_candidate</code></div>
+					</div>
+				</div>
+				<div class="card-body">
+					<form id="form">
+						<div class="field">
+							<label for="candidate_name">Candidate name <span class="hint req">required</span></label>
+							<input id="candidate_name" name="candidate_name" type="text" placeholder="Jane Doe" required />
+						</div>
+						<div class="field">
+							<label for="dropoff_location">Dropoff location <span class="hint req">required</span></label>
+							<input id="dropoff_location" name="dropoff_location" type="text" placeholder="123 Market St, San Francisco" required />
+						</div>
+						<div class="row">
+							<div class="field">
+								<label for="phone">Phone <span class="hint">optional</span></label>
+								<input id="phone" name="phone" type="tel" placeholder="+1 555…" />
+							</div>
+							<div class="field">
+								<label for="id">ID <span class="hint">optional</span></label>
+								<input id="id" name="id" type="text" placeholder="ext-001" />
+							</div>
+						</div>
+						<button type="submit" id="submit-btn" class="block">Create candidate</button>
+					</form>
+					<div id="result" class="result"></div>
+					<div id="place-card" class="place-card"></div>
+					<div id="response-json"></div>
+				</div>
+			</section>
+		</div>
+
+		<!-- RIGHT: candidate list -->
+		<section class="card">
+			<div class="card-head">
+				<div>
+					<h2>Candidates <span class="count-badge" id="count" style="display:none">0</span></h2>
+					<div class="sub">Live from the running mock store</div>
+				</div>
+				<div class="list-tools">
+					<span class="search">
+						<span class="ico">⌕</span>
+						<input id="search" type="text" placeholder="Filter…" />
+					</span>
+					<button type="button" class="secondary tiny" id="refresh-btn">↻ Refresh</button>
+				</div>
+			</div>
+			<div class="card-body">
+				<div id="list"></div>
+			</div>
+		</section>
+	</main>
+
+	<div id="toast-wrap"></div>
 
 	<script>
 		const form = document.getElementById("form");
@@ -221,42 +407,130 @@
 		const countEl = document.getElementById("count");
 		const submitBtn = document.getElementById("submit-btn");
 		const refreshBtn = document.getElementById("refresh-btn");
+		const searchEl = document.getElementById("search");
+		const responseJsonEl = document.getElementById("response-json");
 
-		function showResult(kind, message) {
-			resultEl.className = `result ${kind}`;
-			resultEl.textContent = message;
-			resultEl.style.display = "block";
+		let allItems = [];
+
+		const AVATAR_COLORS = ["#4f46e5","#0891b2","#059669","#d97706","#db2777","#7c3aed","#dc2626","#0d9488"];
+		function avatarColor(s) {
+			let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+			return AVATAR_COLORS[h % AVATAR_COLORS.length];
 		}
-
-		function clearResult() {
-			resultEl.style.display = "none";
+		function initials(name) {
+			const parts = String(name || "?").trim().split(/\s+/);
+			return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?";
 		}
 
 		function escapeHtml(s) {
 			if (s === null || s === undefined) return "";
 			return String(s)
-				.replace(/&/g, "&amp;")
-				.replace(/</g, "&lt;")
-				.replace(/>/g, "&gt;")
-				.replace(/"/g, "&quot;")
-				.replace(/'/g, "&#039;");
+				.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+				.replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 		}
 
+		function timeAgo(iso) {
+			if (!iso) return "";
+			const d = new Date(iso); const s = Math.floor((Date.now() - d.getTime()) / 1000);
+			if (s < 60) return "just now";
+			if (s < 3600) return Math.floor(s / 60) + "m ago";
+			if (s < 86400) return Math.floor(s / 3600) + "h ago";
+			return d.toLocaleDateString();
+		}
+
+		function syntaxHighlight(obj) {
+			const json = escapeHtml(JSON.stringify(obj, null, 2));
+			return json.replace(
+				/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false)\b|\bnull\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+				(m) => {
+					let cls = "json-num";
+					if (/^"/.test(m)) cls = /:$/.test(m) ? "json-key" : "json-str";
+					else if (/true|false/.test(m)) cls = "json-bool";
+					else if (/null/.test(m)) cls = "json-null";
+					return `<span class="${cls}">${m}</span>`;
+				}
+			);
+		}
+
+		function renderJsonBlock(status, statusText, body) {
+			responseJsonEl.innerHTML = `
+				<details class="json">
+					<summary>
+						<span class="chev">▸</span> Response payload
+						<span class="tag">${escapeHtml(status)} ${escapeHtml(statusText)}</span>
+					</summary>
+					<pre>${syntaxHighlight(body)}</pre>
+				</details>`;
+		}
+
+		function clearResult() {
+			resultEl.style.display = "none";
+			responseJsonEl.innerHTML = "";
+		}
+
+		function showResult(kind, message) {
+			resultEl.className = `result ${kind}`;
+			resultEl.innerHTML = `<span class="ico">${kind === "success" ? "✓" : "✕"}</span><span class="msg">${escapeHtml(message)}</span>`;
+			resultEl.style.display = "flex";
+		}
+
+		let toastId = 0;
+		function toast(kind, msg) {
+			const wrap = document.getElementById("toast-wrap");
+			const el = document.createElement("div");
+			el.className = `toast ${kind}`;
+			el.innerHTML = `<span>${kind === "ok" ? "✓" : "✕"}</span><span>${escapeHtml(msg)}</span>`;
+			wrap.appendChild(el);
+			const id = ++toastId;
+			setTimeout(() => { el.style.transition = "opacity .3s, transform .3s"; el.style.opacity = "0"; el.style.transform = "translateX(20px)"; setTimeout(() => el.remove(), 300); }, 3200 + id * 0);
+		}
+
+		function reservationBadgeClass(status) {
+			if (status === "Ready for Reservation") return "ready";
+			if (status === "Requested") return "confirmed";
+			if (status === "Failed") return "failed";
+			return "";
+		}
+
+		const REQUESTABLE_FRAPPE_STATUSES = new Set(["Approved", "Requested Reservation"]);
+
 		function renderCandidate(c) {
-			const meta = [];
-			if (c.phone) meta.push(`<span><span class="label">phone:</span> ${escapeHtml(c.phone)}</span>`);
-			if (c.id) meta.push(`<span><span class="label">id:</span> ${escapeHtml(c.id)}</span>`);
-			if (c.dropoff_place?.place_id) meta.push(`<span><span class="label">place_id:</span> ${escapeHtml(c.dropoff_place.place_id)}</span>`);
-			meta.push(`<span><span class="label">created:</span> ${escapeHtml(c.created_at)}</span>`);
+			const chips = [];
+			if (c.phone) chips.push(`<span class="chip"><b>phone</b> ${escapeHtml(c.phone)}</span>`);
+			if (c.id) chips.push(`<span class="chip"><b>id</b> ${escapeHtml(c.id)}</span>`);
+			if (c.dropoff_place?.place_id) chips.push(`<span class="chip"><b>place</b> ${escapeHtml(c.dropoff_place.place_id)}</span>`);
+			if (c.frappe_candidate) chips.push(`<span class="chip"><b>frappe</b> ${escapeHtml(c.frappe_candidate)}</span>`);
+			if (c.frappe_status) chips.push(`<span class="chip"><b>status</b> ${escapeHtml(c.frappe_status)}</span>`);
+
+			const reservation = c.reservation;
+			const badge = reservation
+				? `<span class="reservation-badge ${reservationBadgeClass(reservation.status)}">${escapeHtml(reservation.status)}${reservation.matched_route ? ` · ${escapeHtml(reservation.matched_route)}` : ""}</span>`
+				: "";
+			const alreadyRequested = reservation && reservation.status === "Requested";
+			const canRequest = !alreadyRequested && REQUESTABLE_FRAPPE_STATUSES.has(c.frappe_status);
+			const requestBtn = canRequest
+				? `<button type="button" class="secondary tiny" data-request="${escapeHtml(c.id || c.name)}">Request reservation</button>`
+				: `<span class="ts">Created ${escapeHtml(timeAgo(c.created_at))}</span>`;
+
+			const color = avatarColor(c.candidate_name || c.name || "?");
 			return `
 				<div class="candidate">
-					<div class="name">${escapeHtml(c.candidate_name)}</div>
-					<div class="meta">
-						<span><span class="label">dropoff:</span> ${escapeHtml(c.dropoff_location)}</span>
-						${meta.join("")}
+					<div class="cand-main">
+						<div class="avatar" style="background:${color}">${escapeHtml(initials(c.candidate_name))}</div>
+						<div class="cand-info">
+							<div class="cand-top">
+								<span class="cand-name">${escapeHtml(c.candidate_name)}</span>
+							</div>
+							<div class="cand-loc">${escapeHtml(c.dropoff_location)}</div>
+							${chips.length ? `<div class="chips">${chips.join("")}</div>` : ""}
+						</div>
+						<div class="cand-side">${badge}</div>
 					</div>
-				</div>
-			`;
+					<div class="cand-foot">
+						<span class="ts">${escapeHtml(timeAgo(c.created_at))}</span>
+						${canRequest ? requestBtn : ""}
+					</div>
+				</div>`;
 		}
 
 		function renderPlaceCard(place) {
@@ -264,8 +538,7 @@
 			if (!place || !place.place_id) {
 				card.innerHTML = `
 					<div class="place-title">Resolved place <span class="badge none">not resolved</span></div>
-					<div style="color:#6b6b75">No place data — either <code>GOOGLE_API_KEY</code> is unset, Google returned no result, or the call failed.</div>
-				`;
+					<div class="muted">No place data — either <code>GOOGLE_API_KEY</code> is unset, Google returned no result, or the call failed.</div>`;
 				card.style.display = "block";
 				return;
 			}
@@ -280,10 +553,7 @@
 				.filter(([_, v]) => v !== null && v !== undefined)
 				.map(([k, v]) => `<div class="place-field"><span class="label">${escapeHtml(k)}</span><span>${escapeHtml(String(v))}</span></div>`)
 				.join("");
-			card.innerHTML = `
-				<div class="place-title">Resolved place <span class="badge">google</span></div>
-				${rows}
-			`;
+			card.innerHTML = `<div class="place-title">Resolved place <span class="badge">google</span></div>${rows}`;
 			card.style.display = "block";
 		}
 
@@ -293,20 +563,67 @@
 			card.innerHTML = "";
 		}
 
-		async function loadList() {
+		function renderList() {
+			const q = searchEl.value.trim().toLowerCase();
+			const items = q
+				? allItems.filter((c) =>
+					[c.candidate_name, c.dropoff_location, c.phone, c.id, c.frappe_candidate, c.frappe_status]
+						.filter(Boolean).some((v) => String(v).toLowerCase().includes(q)))
+				: allItems;
+
+			countEl.style.display = "inline-block";
+			countEl.textContent = allItems.length;
+
+			if (allItems.length === 0) {
+				listEl.innerHTML = `<div class="empty"><div class="t">No candidates yet</div><div class="s">Create one using the form on the left.</div></div>`;
+			} else if (items.length === 0) {
+				listEl.innerHTML = `<div class="empty"><div class="t">No matches for “${escapeHtml(searchEl.value)}”</div></div>`;
+			} else {
+				listEl.innerHTML = items.map(renderCandidate).join("");
+			}
+		}
+
+		function showSkeletons() {
+			listEl.innerHTML = Array.from({ length: 3 }).map(() => `
+				<div class="skeleton">
+					<div class="sk-box" style="width:38px;height:38px"></div>
+					<div style="flex:1">
+						<div class="sk-box" style="width:40%;height:14px;margin-bottom:8px"></div>
+						<div class="sk-box" style="width:65%;height:12px"></div>
+					</div>
+				</div>`).join("");
+		}
+
+		async function fetchFrappeStatus(c) {
+			if (!c.frappe_candidate) return c;
+			try {
+				const res = await fetch(`/api/candidates/${encodeURIComponent(c.id || c.name)}/frappe-status`);
+				const body = await res.json();
+				return { ...c, frappe_status: body.status || null };
+			} catch { return c; }
+		}
+
+		async function loadList(withSkeleton) {
+			if (withSkeleton && allItems.length === 0) showSkeletons();
 			try {
 				const res = await fetch("/api/method/frappe.client.get_list?doctype=Candidate");
 				const body = await res.json();
-				const items = body.data || [];
-				countEl.textContent = `(${items.length})`;
-				if (items.length === 0) {
-					listEl.innerHTML = `<div class="empty">No candidates yet. Create one above.</div>`;
-				} else {
-					listEl.innerHTML = items.map(renderCandidate).join("");
-				}
+				allItems = await Promise.all((body.data || []).map(fetchFrappeStatus));
+				allItems.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+				renderList();
 			} catch (err) {
-				listEl.innerHTML = `<div class="empty">Failed to load: ${escapeHtml(err.message)}</div>`;
+				listEl.innerHTML = `<div class="empty"><div class="t">Failed to load</div><div class="s">${escapeHtml(err.message)}</div></div>`;
 			}
+		}
+
+		async function checkHealth() {
+			const dot = document.getElementById("health-dot");
+			const text = document.getElementById("health-text");
+			try {
+				const res = await fetch("/health");
+				if (res.ok) { dot.className = "dot up"; text.textContent = "online"; }
+				else { dot.className = "dot down"; text.textContent = "error"; }
+			} catch { dot.className = "dot down"; text.textContent = "offline"; }
 		}
 
 		form.addEventListener("submit", async (e) => {
@@ -314,7 +631,7 @@
 			clearResult();
 			clearPlaceCard();
 			submitBtn.disabled = true;
-			submitBtn.textContent = "Creating...";
+			submitBtn.innerHTML = `<span class="spinner"></span> Creating…`;
 
 			const payload = {
 				candidate_name: document.getElementById("candidate_name").value.trim(),
@@ -330,25 +647,58 @@
 					body: JSON.stringify(payload),
 				});
 				const body = await res.json();
+				renderJsonBlock(res.status, res.statusText, body);
 				if (res.ok) {
-					showResult("success", `${res.status} ${res.statusText}\n${JSON.stringify(body, null, 2)}`);
+					showResult("success", `Candidate “${payload.candidate_name}” created.`);
+					toast("ok", `Created ${payload.candidate_name}`);
 					renderPlaceCard(body.dropoff_place);
 					form.reset();
 					loadList();
 				} else {
-					showResult("error", `${res.status} ${res.statusText}\n${JSON.stringify(body, null, 2)}`);
+					showResult("error", `${res.status} ${res.statusText} — ${body.error?.message || body.message || "request failed"}`);
+					toast("err", "Create failed");
 				}
 			} catch (err) {
 				showResult("error", `Network error: ${err.message}`);
+				toast("err", "Network error");
 			} finally {
 				submitBtn.disabled = false;
 				submitBtn.textContent = "Create candidate";
 			}
 		});
 
-		refreshBtn.addEventListener("click", loadList);
+		refreshBtn.addEventListener("click", () => loadList(true));
+		searchEl.addEventListener("input", renderList);
 
-		loadList();
+		async function runAction(btn, url, busyText) {
+			btn.disabled = true;
+			const orig = btn.textContent;
+			btn.innerHTML = `<span class="spinner"></span> ${busyText}`;
+			clearResult();
+			try {
+				const res = await fetch(url, { method: "POST" });
+				const body = await res.json();
+				renderJsonBlock(res.status, res.statusText, body);
+				if (res.ok) { showResult("success", "Reservation requested."); toast("ok", "Reservation requested"); }
+				else { showResult("error", `${res.status} ${res.statusText} — ${body.error?.message || body.message || "failed"}`); toast("err", "Request failed"); }
+			} catch (err) {
+				showResult("error", `Network error: ${err.message}`);
+				toast("err", "Network error");
+			} finally {
+				loadList();
+			}
+		}
+
+		listEl.addEventListener("click", (e) => {
+			const requestBtn = e.target.closest("[data-request]");
+			if (!requestBtn) return;
+			const idOrName = requestBtn.getAttribute("data-request");
+			runAction(requestBtn, `/api/reservations/${encodeURIComponent(idOrName)}/request-reservation`, "Requesting…");
+		});
+
+		checkHealth();
+		setInterval(checkHealth, 15000);
+		loadList(true);
 	</script>
 </body>
 </html>

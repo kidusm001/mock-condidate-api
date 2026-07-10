@@ -23,6 +23,9 @@ The dev/start scripts load environment variables from `.env` via Bun's `--env-fi
 
 ```
 WEBHOOK_URL=http://localhost:8000/api/method/mmcy_fleet_management.api.dispatch.receive_candidate
+FRAPPE_BASE_URL=
+AUTO_CONFIRM_RESERVATION=false
+EXTERNAL_RESERVATION_TOKEN=
 GOOGLE_API_KEY=
 API_KEY=api_key:api_secret
 ```
@@ -30,8 +33,11 @@ API_KEY=api_key:api_secret
 | Var | Purpose | If unset |
 |---|---|---|
 | `WEBHOOK_URL` | Where to POST a `candidate.created` form-encoded payload after each create | Mock is fully inert, no outbound calls |
+| `FRAPPE_BASE_URL` | Origin used to build the Frappe `request_reservation` RPC URL | Derived from `WEBHOOK_URL`'s origin |
+| `EXTERNAL_RESERVATION_TOKEN` | Shared secret Frappe must send as `Authorization: token <value>` on `PUT /api/external/reservation`. Must match `external_reservation_token` in Frappe's `site_config.json` | Auth check on that endpoint is disabled — any caller is accepted |
+| `AUTO_CONFIRM_RESERVATION` | Auto-call `request_reservation` after receiving a "ready for reservation" PUT | Defaults to `false` — reservation is driven manually (dispatcher UI, or `POST /api/reservations/:id/request-reservation`); set to `true` to auto-confirm |
 | `GOOGLE_API_KEY` | Google Places API key used to resolve `dropoff_location` → place data | Place data resolves to all-nulls |
-| `API_KEY` | Frappe `api_key:api_secret` pair, sent as `Authorization: token <key>` on the webhook | Webhook is sent with no auth header (server may reject with `401`/`403`) |
+| `API_KEY` | Frappe `api_key:api_secret` pair, sent as `Authorization: token <key>` on outbound calls (webhook, `request_reservation`) | Sent with no auth header (server may reject with `401`/`403`) |
 
 ## Endpoints
 
@@ -41,6 +47,8 @@ API_KEY=api_key:api_secret
 | `GET`  | `/api/method/receive_candidate` | Same handler, args from query string |
 | `GET`  | `/api/method/frappe.client.get_list?doctype=Candidate` | List all candidates |
 | `GET`  | `/api/resource/Candidate/:name` | Fetch one candidate by name |
+| `PUT`  | `/api/external/reservation` | Inbound: Frappe notifies a candidate is "Ready for Reservation" |
+| `POST` | `/api/reservations/:idOrName/request-reservation` | Manually call Frappe's `request_reservation` |
 | `POST` | `/api/reset` | Wipe store and reseed |
 | `GET`  | `/health` | Liveness check |
 | `GET`  | `/` | HTML form for manual testing |
@@ -129,6 +137,46 @@ Authorization: token <api_key>:<api_secret>   # only if API_KEY is set
 ```
 
 5-second timeout on the webhook delivery.
+
+## Reservation Callback Flow
+
+Mirrors `mmcy_fleet_management`'s post-match flow. Approving a match is a
+Frappe-side dispatcher decision made in the Frappe desk — the mock does not
+call `approve_match` itself. The mock's role starts once Frappe notifies it
+that a candidate is ready:
+
+0. After `receive_candidate`'s webhook fires, the mock parses Frappe's
+   response (`{"message": "<Candidate name>"}`) and stores it as
+   `frappe_candidate` on the local record, purely for display/reference.
+1. A dispatcher approves the matched candidate in Frappe (`approve_match`),
+   which PUTs to `external_reservation_url` (Frappe's `site_config.json`) —
+   point that at this mock's `PUT /api/external/reservation`.
+2. Payload: `{external_request_id, candidate, candidate_name, matched_route, state}`.
+   The mock looks up the local candidate by `external_request_id` and records
+   the reservation state as `Ready for Reservation`.
+3. If `AUTO_CONFIRM_RESERVATION=true`, the mock calls Frappe's
+   `request_reservation` (form-encoded POST, carrying `external_request_id`),
+   advancing the candidate `Approved → Requested Reservation → Reserved` (or
+   leaving it at `Requested Reservation` if the route is full). Defaults to
+   `false`, so the candidate rests at `Approved` until reservation is triggered
+   manually.
+4. If `AUTO_CONFIRM_RESERVATION=false`, trigger the call manually — click
+   **"Request Reservation"** on the candidate's card, or
+   `POST /api/reservations/:idOrName/request-reservation` (accepts either the
+   mock's candidate `name` or its `id`/`external_request_id`).
+
+Reservation state is stored per-candidate under `reservation`:
+
+```json
+{
+  "status": "Ready for Reservation" | "Requested" | "Failed",
+  "matched_route": "ROUTE-0001",
+  "frappe_candidate": "CAND-0001",
+  "notified_at": "2026-07-02T15:56:52.515Z",
+  "requested_at": null,
+  "response": null
+}
+```
 
 ## Storage
 

@@ -43,9 +43,25 @@ export async function has(name: string): Promise<boolean> {
 	return items.some((c) => c.name === name);
 }
 
+export async function findByExternalId(id: string): Promise<Candidate | undefined> {
+	const items = await load();
+	return items.find((c) => c.id === id);
+}
+
 export async function insert(candidate: Candidate): Promise<Candidate> {
 	const items = await load();
 	items.push(candidate);
+	await persist(items);
+	return candidate;
+}
+
+export async function update(candidate: Candidate): Promise<Candidate> {
+	const items = await load();
+	const idx = items.findIndex((c) => c.name === candidate.name);
+	if (idx === -1) {
+		throw new Error(`Candidate '${candidate.name}' not found`);
+	}
+	items[idx] = candidate;
 	await persist(items);
 	return candidate;
 }
