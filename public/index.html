@@ -358,15 +358,9 @@
 							<label for="dropoff_location">Dropoff location <span class="hint req">required</span></label>
 							<input id="dropoff_location" name="dropoff_location" type="text" placeholder="123 Market St, San Francisco" required />
 						</div>
-						<div class="row">
-							<div class="field">
-								<label for="phone">Phone <span class="hint">optional</span></label>
-								<input id="phone" name="phone" type="tel" placeholder="+1 555…" />
-							</div>
-							<div class="field">
-								<label for="id">ID <span class="hint">optional</span></label>
-								<input id="id" name="id" type="text" placeholder="ext-001" />
-							</div>
+						<div class="field">
+							<label for="phone">Phone <span class="hint">optional</span></label>
+							<input id="phone" name="phone" type="tel" placeholder="+1 555…" />
 						</div>
 						<button type="submit" id="submit-btn" class="block">Create candidate</button>
 					</form>
@@ -637,7 +631,6 @@
 				candidate_name: document.getElementById("candidate_name").value.trim(),
 				dropoff_location: document.getElementById("dropoff_location").value.trim(),
 				phone: document.getElementById("phone").value.trim() || null,
-				id: document.getElementById("id").value.trim() || null,
 			};
 
 			try {

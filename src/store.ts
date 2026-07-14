@@ -48,6 +48,16 @@ export async function findByExternalId(id: string): Promise<Candidate | undefine
 	return items.find((c) => c.id === id);
 }
 
+export async function generateExternalId(): Promise<string> {
+	const items = await load();
+	let max = 1000;
+	for (const c of items) {
+		const match = c.id?.match(/^REQ-(\d+)$/);
+		if (match) max = Math.max(max, Number(match[1]));
+	}
+	return `REQ-${max + 1}`;
+}
+
 export async function insert(candidate: Candidate): Promise<Candidate> {
 	const items = await load();
 	items.push(candidate);

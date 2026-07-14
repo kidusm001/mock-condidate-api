@@ -180,10 +180,12 @@ async function handleReceiveCandidate(req: Request): Promise<Response> {
 
 	const dropoff_place = await resolvePlace(data.dropoff_location!);
 
+	const id = data.id ?? (await store.generateExternalId());
+
 	const candidate: Candidate = {
 		name: data.candidate_name!,
 		candidate_name: data.candidate_name!,
-		id: data.id ?? null,
+		id,
 		phone: data.phone ?? null,
 		dropoff_location: data.dropoff_location!,
 		dropoff_place,

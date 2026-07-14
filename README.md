@@ -70,7 +70,7 @@ API_KEY=api_key:api_secret
 - `candidate_name` — required, string
 - `dropoff_location` — required, string (raw text — gets resolved to a Place)
 - `phone` — optional, string
-- `id` — optional, string
+- `id` — optional, string. If omitted, the mock auto-generates a unique value (`REQ-<n>`, e.g. `REQ-1004`) so every candidate always has a mandatory ID. A caller-supplied `id` is still accepted if it is a string.
 
 Unknown fields are rejected with `400 ValidationError`.
 

@@ -38,7 +38,7 @@ export const seedCandidates: Candidate[] = [
 	{
 		name: "Daniel Mekonnen",
 		candidate_name: "Daniel Mekonnen",
-		id: null,
+		id: "REQ-1003",
 		phone: null,
 		dropoff_location: "Sarbet, near St. Urael Church",
 		dropoff_place: {
