@@ -17,6 +17,7 @@ export const seedCandidates: Candidate[] = [
 		created_at: "2026-05-30T09:00:00.000Z",
 		reservation: null,
 		frappe_candidate: null,
+		priority: false,
 	},
 	{
 		name: "Sara Tesfaye",
@@ -34,6 +35,7 @@ export const seedCandidates: Candidate[] = [
 		created_at: "2026-05-31T14:15:00.000Z",
 		reservation: null,
 		frappe_candidate: null,
+		priority: false,
 	},
 	{
 		name: "Daniel Mekonnen",
@@ -51,5 +53,6 @@ export const seedCandidates: Candidate[] = [
 		created_at: "2026-06-01T08:45:00.000Z",
 		reservation: null,
 		frappe_candidate: null,
+		priority: false,
 	},
 ];

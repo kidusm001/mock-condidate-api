@@ -13,6 +13,7 @@ type FrappePayload = {
 	dropoff_place_formatted_address: string;
 	dropoff_place_lat: string;
 	dropoff_place_lng: string;
+	priority: string;
 };
 
 function toFrappePayload(c: Candidate): FrappePayload {
@@ -27,6 +28,7 @@ function toFrappePayload(c: Candidate): FrappePayload {
 		dropoff_place_formatted_address: place?.formatted_address ?? "",
 		dropoff_place_lat: place?.lat != null ? String(place.lat) : "",
 		dropoff_place_lng: place?.lng != null ? String(place.lng) : "",
+		priority: c.priority ? "true" : "false",
 	};
 }
 

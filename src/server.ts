@@ -11,6 +11,7 @@ const ALLOWED_FIELDS = new Set([
 	"dropoff_location",
 	"phone",
 	"id",
+	"priority",
 ]);
 
 const PORT = Number(process.env.PORT ?? 8001);
@@ -143,6 +144,16 @@ function validateReceiveCandidate(
 		};
 	}
 
+	const priority = body.priority;
+	if (priority !== undefined && priority !== null && typeof priority !== "boolean") {
+		return {
+			ok: false,
+			status: 400,
+			code: "ValidationError",
+			message: "priority must be a boolean",
+		};
+	}
+
 	return {
 		ok: true,
 		data: {
@@ -150,6 +161,7 @@ function validateReceiveCandidate(
 			dropoff_location: dropoff_location.trim(),
 			phone: phone === undefined || phone === null ? null : (phone as string).trim() || null,
 			id: id === undefined || id === null ? null : (id as string).trim() || null,
+			priority: priority === undefined || priority === null ? false : priority,
 		},
 	};
 }
@@ -192,6 +204,7 @@ async function handleReceiveCandidate(req: Request): Promise<Response> {
 		created_at: new Date().toISOString(),
 		reservation: null,
 		frappe_candidate: null,
+		priority: data.priority ?? false,
 	};
 	await store.insert(candidate);
 	notifyCandidateCreated(candidate);

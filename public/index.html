@@ -156,6 +156,36 @@
 		.row { display: flex; gap: 0.75rem; }
 		.row .field { flex: 1; }
 
+		.field.checkbox {
+			display: flex; align-items: center; justify-content: space-between;
+			padding: 0.55rem 0.75rem; margin-bottom: 0.9rem;
+			border: 1px solid var(--border-strong); border-radius: 8px;
+			background: var(--surface);
+		}
+		.field.checkbox .checkbox-label {
+			font-size: 0.8rem; font-weight: 600; color: var(--text-2);
+			display: flex; flex-direction: column; gap: 2px;
+		}
+		.field.checkbox .checkbox-label .hint {
+			text-transform: none; letter-spacing: normal; font-weight: 500;
+		}
+
+		.switch { position: relative; display: inline-block; width: 44px; height: 24px; flex: none; }
+		.switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+		.switch .slider {
+			position: absolute; cursor: pointer; inset: 0;
+			background: var(--border-strong); border-radius: 999px;
+			transition: background .15s ease;
+		}
+		.switch .slider::before {
+			content: ""; position: absolute; height: 18px; width: 18px;
+			left: 3px; top: 3px; background: #fff; border-radius: 50%;
+			box-shadow: 0 1px 2px rgba(0,0,0,0.25); transition: transform .15s ease;
+		}
+		.switch input:checked + .slider { background: var(--brand); }
+		.switch input:focus-visible + .slider { box-shadow: 0 0 0 3px rgba(79,70,229,0.25); }
+		.switch input:checked + .slider::before { transform: translateX(20px); }
+
 		button {
 			background: var(--brand); color: white; border: none;
 			padding: 0.65rem 1.1rem; border-radius: 8px;
@@ -361,6 +391,15 @@
 						<div class="field">
 							<label for="phone">Phone <span class="hint">optional</span></label>
 							<input id="phone" name="phone" type="tel" placeholder="+1 555…" />
+						</div>
+						<div class="field checkbox">
+							<span class="checkbox-label">
+								Priority <span class="hint">optional · default off</span>
+							</span>
+							<label class="switch" title="Mark candidate as priority">
+								<input id="priority" name="priority" type="checkbox" />
+								<span class="slider"></span>
+							</label>
 						</div>
 						<button type="submit" id="submit-btn" class="block">Create candidate</button>
 					</form>
@@ -631,6 +670,7 @@
 				candidate_name: document.getElementById("candidate_name").value.trim(),
 				dropoff_location: document.getElementById("dropoff_location").value.trim(),
 				phone: document.getElementById("phone").value.trim() || null,
+				priority: document.getElementById("priority").checked,
 			};
 
 			try {

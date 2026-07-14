@@ -71,6 +71,7 @@ API_KEY=api_key:api_secret
 - `dropoff_location` — required, string (raw text — gets resolved to a Place)
 - `phone` — optional, string
 - `id` — optional, string. If omitted, the mock auto-generates a unique value (`REQ-<n>`, e.g. `REQ-1004`) so every candidate always has a mandatory ID. A caller-supplied `id` is still accepted if it is a string.
+- `priority` — optional, boolean. Defaults to `false` if omitted. Forwarded to Frappe in the webhook payload as `priority=true`/`false`.
 
 Unknown fields are rejected with `400 ValidationError`.
 
@@ -126,6 +127,7 @@ candidate_name=Alice+Smith
 &dropoff_place_formatted_address=Bole%2C+Addis+Ababa%2C+Ethiopia
 &dropoff_place_lat=9.0054
 &dropoff_place_lng=38.789
+&priority=false
 ```
 
 ### Request headers

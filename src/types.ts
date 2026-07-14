@@ -26,6 +26,7 @@ export type Candidate = {
 	reservation: ReservationState | null;
 	/** Frappe's Candidate.name, learned from the receive_candidate webhook response. */
 	frappe_candidate: string | null;
+	priority: boolean;
 };
 
 export type ReadyForReservationPayload = {
@@ -41,6 +42,7 @@ export type ReceiveCandidateRequest = {
 	phone?: string | null;
 	id?: string | null;
 	dropoff_location?: string | null;
+	priority?: boolean | null;
 };
 
 export type ErrorResponse = {
