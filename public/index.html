@@ -408,6 +408,30 @@
 					<div id="response-json"></div>
 				</div>
 			</section>
+
+			<section class="card">
+				<div class="card-head">
+					<div>
+						<h2>Email recipient</h2>
+						<div class="sub">Recruiter notified via webhook <code>POST /api/settings/recruiter</code></div>
+					</div>
+				</div>
+				<div class="card-body">
+					<div id="recruiter-current" class="recruiter-current"></div>
+					<form id="recruiter-form">
+						<div class="field">
+							<label for="recruiter_name">Name <span class="hint req">required</span></label>
+							<input id="recruiter_name" name="recruiter_name" type="text" placeholder="HR Team" required />
+						</div>
+						<div class="field">
+							<label for="recruiter_email">Email <span class="hint req">required</span></label>
+							<input id="recruiter_email" name="recruiter_email" type="email" placeholder="hr@company.com" required />
+						</div>
+						<button type="submit" id="recruiter-submit-btn" class="block">Save recipient</button>
+					</form>
+					<div id="recruiter-result" class="result"></div>
+				</div>
+			</section>
 		</div>
 
 		<!-- RIGHT: candidate list -->
@@ -699,6 +723,65 @@
 				submitBtn.textContent = "Create candidate";
 			}
 		});
+
+		const recruiterForm = document.getElementById("recruiter-form");
+		const recruiterSubmitBtn = document.getElementById("recruiter-submit-btn");
+		const recruiterResultEl = document.getElementById("recruiter-result");
+		const recruiterCurrentEl = document.getElementById("recruiter-current");
+
+		async function loadRecruiter() {
+			try {
+				const res = await fetch("/api/settings/recruiter");
+				if (res.ok) {
+					const r = await res.json();
+					recruiterCurrentEl.innerHTML = `<div class="recruiter-chip"><span class="recruiter-avatar">${escapeHtml((r.name || "?")[0])}</span><div><div class="recruiter-name">${escapeHtml(r.name)}</div><div class="recruiter-email">${escapeHtml(r.email)}</div></div></div>`;
+					recruiterSubmitBtn.textContent = "Update recipient";
+				} else if (res.status === 404) {
+					recruiterCurrentEl.innerHTML = `<div class="recruiter-empty">No recipient set yet.</div>`;
+					recruiterSubmitBtn.textContent = "Save recipient";
+				}
+			} catch {
+				recruiterCurrentEl.innerHTML = `<div class="recruiter-empty">Could not load recipient.</div>`;
+			}
+		}
+
+		recruiterForm.addEventListener("submit", async (e) => {
+			e.preventDefault();
+			recruiterResultEl.innerHTML = "";
+			recruiterSubmitBtn.disabled = true;
+			recruiterSubmitBtn.innerHTML = `<span class="spinner"></span> Saving…`;
+
+			const payload = {
+				name: document.getElementById("recruiter_name").value.trim(),
+				email: document.getElementById("recruiter_email").value.trim(),
+			};
+
+			try {
+				const res = await fetch("/api/settings/recruiter", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(payload),
+				});
+				const body = await res.json();
+				if (res.ok) {
+					showResult("success", `Recipient “${payload.name}” saved.`);
+					toast("ok", "Recipient saved");
+					recruiterForm.reset();
+					loadRecruiter();
+				} else {
+					showResult("error", `${res.status} ${res.statusText} — ${body.error?.message || body.message || "request failed"}`);
+					toast("err", "Save failed");
+				}
+			} catch (err) {
+				showResult("error", `Network error: ${err.message}`);
+				toast("err", "Network error");
+			} finally {
+				recruiterSubmitBtn.disabled = false;
+				recruiterSubmitBtn.textContent = "Save recipient";
+			}
+		});
+
+		loadRecruiter();
 
 		refreshBtn.addEventListener("click", () => loadList(true));
 		searchEl.addEventListener("input", renderList);

@@ -1,4 +1,5 @@
 import * as store from "./store.ts";
+import * as settings from "./settings.ts";
 import type { Candidate } from "./types.ts";
 
 const TIMEOUT_MS = 5000;
@@ -14,9 +15,11 @@ type FrappePayload = {
 	dropoff_place_lat: string;
 	dropoff_place_lng: string;
 	priority: string;
+	recruiter_email: string;
+	recruiter_name: string;
 };
 
-function toFrappePayload(c: Candidate): FrappePayload {
+function toFrappePayload(c: Candidate, recruiter: settings.RecruiterSettings | null): FrappePayload {
 	const place = c.dropoff_place;
 	return {
 		candidate_name: c.candidate_name,
@@ -29,6 +32,8 @@ function toFrappePayload(c: Candidate): FrappePayload {
 		dropoff_place_lat: place?.lat != null ? String(place.lat) : "",
 		dropoff_place_lng: place?.lng != null ? String(place.lng) : "",
 		priority: c.priority ? "true" : "false",
+		recruiter_email: recruiter?.email ?? "",
+		recruiter_name: recruiter?.name ?? "",
 	};
 }
 
@@ -36,7 +41,20 @@ export function notifyCandidateCreated(candidate: Candidate): void {
 	const url = process.env.WEBHOOK_URL;
 	if (!url) return;
 
-	const body = new URLSearchParams(toFrappePayload(candidate)).toString();
+	settings
+		.get()
+		.then((recruiter) => {
+			const body = new URLSearchParams(toFrappePayload(candidate, recruiter)).toString();
+			sendWebhook(url, candidate, body);
+		})
+		.catch((err) => {
+			console.error(`[webhook] could not load recruiter settings: ${(err as Error).message}`);
+			const body = new URLSearchParams(toFrappePayload(candidate, null)).toString();
+			sendWebhook(url, candidate, body);
+		});
+}
+
+function sendWebhook(url: string, candidate: Candidate, body: string): void {
 
 	const headers: Record<string, string> = {
 		"Content-Type": "application/x-www-form-urlencoded",

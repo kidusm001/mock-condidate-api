@@ -3,6 +3,7 @@ import { getCandidateStatus } from "./frappe.ts";
 import { resolvePlace } from "./place.ts";
 import { handleReadyForReservation, requestReservation } from "./reservation.ts";
 import * as store from "./store.ts";
+import * as settings from "./settings.ts";
 import type { Candidate, ReadyForReservationPayload, ReceiveCandidateRequest } from "./types.ts";
 import { notifyCandidateCreated } from "./webhook.ts";
 
@@ -306,6 +307,41 @@ async function handleRequestReservation(idOrName: string): Promise<Response> {
 	}
 }
 
+async function handleSetRecruiter(req: Request): Promise<Response> {
+	let body: Record<string, unknown>;
+	try {
+		body = await parseBody(req);
+	} catch (err) {
+		return withCors(
+			httpError(400, "ValidationError", `invalid request body: ${(err as Error).message}`),
+		);
+	}
+
+	const email = body.email;
+	const name = body.name;
+	if (typeof email !== "string" || !email.trim()) {
+		return withCors(httpError(400, "ValidationError", "email is required"));
+	}
+	if (typeof name !== "string" || !name.trim()) {
+		return withCors(httpError(400, "ValidationError", "name is required"));
+	}
+
+	try {
+		const saved = await settings.set(email.trim(), name.trim());
+		return withCors(jsonResponse(201, saved));
+	} catch (err) {
+		return withCors(httpError(409, "AlreadySet", (err as Error).message));
+	}
+}
+
+async function handleGetRecruiter(): Promise<Response> {
+	const existing = await settings.get();
+	if (!existing) {
+		return withCors(httpError(404, "NotFound", "recruiter settings not set"));
+	}
+	return withCors(jsonResponse(200, existing));
+}
+
 async function handleReset(): Promise<Response> {
 	const items = await store.reset();
 	return withCors(jsonResponse(200, { data: items, reset: true }));
@@ -354,6 +390,9 @@ const server = Bun.serve({
 		}
 
 		if (path === "/api/reset" && req.method === "POST") return handleReset();
+
+		if (path === "/api/settings/recruiter" && req.method === "POST") return handleSetRecruiter(req);
+		if (path === "/api/settings/recruiter" && req.method === "GET") return handleGetRecruiter();
 
 		if (path === "/api/external/reservation" && req.method === "PUT") {
 			return handleReadyForReservationPut(req);
