@@ -149,7 +149,7 @@ Send via `application/json` or `application/x-www-form-urlencoded`:
 | `dropoff_location` | `string` | **Yes** | Raw landmark text for drop-off. Gets resolved to Place coordinates if `GOOGLE_API_KEY` is present |
 | `pickup_location` | `string` | Optional | Raw landmark text for pick-up. Allowed when `requested_directions` is `"Pick-up"` or `"Both"`. If omitted, Frappe uses the drop-off location |
 | `requested_directions`| `string` | Optional | `"Drop-off"`, `"Pick-up"`, or `"Both"`. Defaults to `"Drop-off"` |
-| `id` | `string` | Optional | Caller-provided idempotency key. If omitted, mock generates `REQ-<n>` (e.g. `REQ-1004`) |
+| `id` | `string` | Optional | Caller-provided idempotency key. If omitted, mock generates a time-based `REQ-<ms timestamp>` (e.g. `REQ-1793010850675`), unique across restarts |
 | `phone` | `string` | Optional | Contact phone number |
 | `priority` | `boolean` | Optional | High priority flag (defaults to `false`) |
 | `dropoff_place` | `object` | Optional | A place already picked through `/api/places/search` + `/api/places/details` (`place_id`, `display_name`, `formatted_address`, numeric `lat`/`lng`). Used as-is instead of re-searching `dropoff_location`. JSON bodies only |

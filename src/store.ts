@@ -103,14 +103,11 @@ export async function findByExternalId(id: string): Promise<Candidate | undefine
 	return items.find((c) => c.id === id);
 }
 
+// Time-based, not "highest stored id + 1": the store is wiped on every hosted restart,
+// so a counter hands out ids Frappe already has, and Frappe treats a known
+// external_request_id as a replay and returns the old Candidate instead of a new one.
 export async function generateExternalId(): Promise<string> {
-	const items = await load();
-	let max = 1000;
-	for (const c of items) {
-		const match = c.id?.match(/^REQ-(\d+)$/);
-		if (match) max = Math.max(max, Number(match[1]));
-	}
-	return `REQ-${max + 1}`;
+	return `REQ-${Date.now()}`;
 }
 
 export async function insert(candidate: Candidate): Promise<Candidate> {
